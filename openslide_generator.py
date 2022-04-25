@@ -11,7 +11,8 @@ from openslide import OpenSlide
 
 from skimage.color import rgb2hed, hed2rgb
 
-import keras
+import tensorflow as tf
+import tensorflow.keras as keras
 
 
 class SimpleOpenSlideGenerator(object):
@@ -181,8 +182,7 @@ class OpenSlideGenerator(object):
 
     def __init__(self, path, root, src_size, patch_size, fetch_mode='area', label_to_use=0,
                  rotation=True, flip=False, blur=0, he_augmentation=False, scale_augmentation=False,
-                 color_matching=None,
-                 dump_patch=None, verbose=1):
+                 color_matching=None, dump_patch=None, verbose=1):
         self.path = path
         self.root = root
         self.src_size = src_size
@@ -273,7 +273,7 @@ class OpenSlideGenerator(object):
                     line = line[1:]
                 else:
                     try:
-                        items = list(map(int, line.split()))
+                        items = list(map(float, line.split()))
                     except Exception:
                         raise Exception('invalid dataset file format!')
                 if state == 0:
@@ -881,7 +881,7 @@ class OpenSlideGenerator(object):
             for i in range(batch_size):
                 image, label, _ = self.get_example(i)
                 images.append(image.transpose((1, 2, 0)))
-                labels.append(keras.utils.to_categorical(self.labels[self.label_to_use].index(label), len(self.labels[self.label_to_use])))
+                labels.append(tf.keras.utils.to_categorical(self.labels[self.label_to_use].index(label), len(self.labels[self.label_to_use])))
             images = np.asarray(images, dtype=np.float32)
             labels = np.asarray(labels, dtype=np.float32)
             if preprocess_input is not None:
