@@ -182,7 +182,7 @@ class OpenSlideGenerator(object):
 
     def __init__(self, path, root, src_size, patch_size, fetch_mode='area', label_to_use=0,
                  rotation=True, flip=False, blur=0, he_augmentation=False, scale_augmentation=False,
-                 color_matching=None, dump_patch=None, verbose=1):
+                 color_matching=None, dump_patch=None, colour_deconvolution=False, verbose=1):
         self.path = path
         self.root = root
         self.src_size = src_size
@@ -197,6 +197,7 @@ class OpenSlideGenerator(object):
         self.he_augmentation = he_augmentation
         self.scale_augmentation = scale_augmentation
         self.dump_patch = dump_patch
+        self.colour_deconvolution = colour_deconvolution
         self.verbose = verbose
 
         self.use_color_matching = False
@@ -658,6 +659,90 @@ class OpenSlideGenerator(object):
             return self.serialized_index_label_slide[self.label_to_use][label][slide][i]
         else:
             return self.serialized_index_label_slide[self.label_to_use][label][slide][self.a_label_slide[self.label_to_use][label][slide][i]]
+
+    def colour_deconvolution(image):
+        '''
+        Converts the rgb image into an array of separated stains. 
+
+        '''
+
+        from skimage.color import separate_stains, combine_stains
+        from skimage.color import rgb2hed, hed2rgb
+        from skimage.color import hdx_from_rgb, rgb_from_hdx
+        from skimage.color import rgb_from_fgx, fgx_from_rgb
+        from skimage.color import rgb_from_bex, bex_from_rgb
+        from skimage.color import rgb_from_rbd, rbd_from_rgb
+        from skimage.color import rgb_from_gdx, gdx_from_rgb
+        from skimage.color import rgb_from_hax, hax_from_rgb
+        from skimage.color import rgb_from_bro, bro_from_rgb
+        from skimage.color import rgb_from_bpx, bpx_from_rgb
+        from skimage.color import rgb_from_ahx, ahx_from_rgb
+        from skimage.color import rgb_from_hpx, hpx_from_rgb
+
+        #def ihc_color_deconvolution(rgb):
+        # ---- HED
+        ihc_hed = rgb2hed(rgb)
+        haematoxylin_hed = np.reshape(ihc_hed[:, :, 0], (rgb.shape[0], rgb.shape[1], 1))
+        eosin = np.reshape(ihc_hed[:, :, 1], (rgb.shape[0], rgb.shape[1], 1))
+        dab_hed = np.reshape(ihc_hed[:, :, 2], (rgb.shape[0], rgb.shape[1], 1))
+        
+        # ---- HDX
+        ihc_hdx = separate_stains(rgb, hdx_from_rgb)
+        hematoxylin_hdx = np.reshape(ihc_hdx[:, :, 0], (rgb.shape[0], rgb.shape[1], 1))
+        dab_hdx = np.reshape(ihc_hdx[:, :, 1], (rgb.shape[0], rgb.shape[1], 1))
+    
+        # ---- FGX
+        ihc_fgx = separate_stains(rgb, fgx_from_rgb)
+        feulgen = np.reshape(ihc_fgx[:, :, 0], (rgb.shape[0], rgb.shape[1], 1))
+        light_green = np.reshape(ihc_fgx[:, :, 1], (rgb.shape[0], rgb.shape[1], 1))
+    
+        # ---- BEX
+        ihc_bex = separate_stains(rgb, bex_from_rgb)
+        giemsa = np.reshape(ihc_bex[:, :, 0], (rgb.shape[0], rgb.shape[1], 1))
+        methyl_blue = np.reshape(ihc_bex[:, :, 1], (rgb.shape[0], rgb.shape[1], 1))
+        eosin_bex = np.reshape(ihc_bex[:, :, 2], (rgb.shape[0], rgb.shape[1], 1))
+    
+        # ---- RBD
+        ihc_rbd = separate_stains(rgb, rbd_from_rgb)
+        fastred = np.reshape(ihc_rbd[:, :, 0], (rgb.shape[0], rgb.shape[1], 1))
+        fastblue = np.reshape(ihc_rbd[:, :, 1], (rgb.shape[0], rgb.shape[1], 1))
+        
+        # ---- GDX
+        ihc_gdx = separate_stains(rgb, gdx_from_rgb)
+        methyl_green = np.reshape(ihc_gdx[:, :, 0], (rgb.shape[0], rgb.shape[1], 1))
+
+        # ---- HAX
+        ihc_hax = separate_stains(rgb, hax_from_rgb)
+        aec = np.reshape(ihc_hax[:, :, 1], (rgb.shape[0], rgb.shape[1], 1))
+    
+        # ---- BRO
+        ihc_bro = separate_stains(rgb, bro_from_rgb)
+        anilline_blue = np.reshape(ihc_bro[:, :, 0], (rgb.shape[0], rgb.shape[1], 1))
+        azocarmine = np.reshape(ihc_bro[:, :, 1], (rgb.shape[0], rgb.shape[1], 1))
+        orange = np.reshape(ihc_bro[:, :, 2], (rgb.shape[0], rgb.shape[1], 1))
+    
+        # ---- BPX
+        ihc_bpx = separate_stains(rgb, bpx_from_rgb)
+        methyl_blue = np.reshape(ihc_bpx[:, :, 0], (rgb.shape[0], rgb.shape[1], 1))
+        ponceau_fuchsin = np.reshape(ihc_bpx[:, :, 1], (rgb.shape[0], rgb.shape[1], 1))
+
+        # ---- AHX
+        ihc_ahx = separate_stains(rgb, ahx_from_rgb)
+        alcian_blue = np.reshape(ihc_ahx[:, :, 0], (rgb.shape[0], rgb.shape[1], 1))
+        hematoxylin_ahx = np.reshape(ihc_ahx[:, :, 1], (rgb.shape[0], rgb.shape[1], 1))
+
+        # ---- HPX
+        ihc_hpx = separate_stains(rgb, hpx_from_rgb)
+        hematoxylin_hpx = np.reshape(ihc_hpx[:, :, 0], (rgb.shape[0], rgb.shape[1], 1))
+        pas = np.reshape(ihc_hpx[:, :, 1], (rgb.shape[0], rgb.shape[1], 1))
+        
+        ihc = np.concatenate((haematoxylin_hed, eosin, dab_hed, hematoxylin_hdx, dab_hdx, feulgen, \
+                          light_green, giemsa, methyl_blue, eosin_bex, fastred, fastblue, methyl_green, \
+                          aec, anilline_blue, azocarmine, orange, methyl_blue, ponceau_fuchsin, alcian_blue, \
+                          hematoxylin_ahx, hematoxylin_hpx, pas), axis=2)
+        
+        return ihc
+
 
     # winding-number algorithm
     def point_in_region(self, slide_id, region_id, cx, cy):

@@ -19,6 +19,7 @@ It also provides several data augmentation features (see below).
 
 ## Dependency
 
+- TensorFlow
 - Keras
 - OpenCV3
 - tripy
