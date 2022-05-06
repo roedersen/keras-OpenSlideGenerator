@@ -868,7 +868,7 @@ class OpenSlideGenerator(object):
             im = Image.fromarray(np.uint8(result.transpose((1,2,0))*255))
             im.save('./%s/%d_%d-%d-%d.png' % (self.dump_patch, self.label_of_region[self.label_to_use][slide_id][region_id], slide_id, region_id, i))
 
-        return result, self.label_of_region[self.label_to_use][slide_id][region_id], (slide_id, region_id, posx, posy)
+        return result.transpose(1, 2, 0), self.label_of_region[self.label_to_use][slide_id][region_id], (slide_id, region_id, posx, posy)
 
     def get_examples_of_slide_label(self, slide_id, label, count):
         if len(self.regions_of_label_slide[self.label_to_use][label][slide_id]) == 0:
