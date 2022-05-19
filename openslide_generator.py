@@ -965,7 +965,7 @@ class OpenSlideGenerator(object):
             labels = []
             for i in range(batch_size):
                 image, label, _ = self.get_example(i)
-                images.append(image.transpose((1, 2, 0)))
+                images.append(image.transpose((0, 1, 2)))
                 labels.append(tf.keras.utils.to_categorical(self.labels[self.label_to_use].index(label), len(self.labels[self.label_to_use])))
             images = np.asarray(images, dtype=np.float32)
             labels = np.asarray(labels, dtype=np.float32)
